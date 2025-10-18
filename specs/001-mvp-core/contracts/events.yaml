@@ -1,0 +1,259 @@
+openapi: 3.0.3
+info:
+  title: Writing Timeline Platform - Events API
+  version: 1.0.0
+  description: Writing event storage and retrieval for playback
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://writeback.vercel.app/api
+    description: Production
+
+paths:
+  /documents/{id}/events:
+    post:
+      summary: Save writing events (batch)
+      operationId: saveEvents
+      tags:
+        - Events
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Document UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - events
+              properties:
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    $ref: '#/components/schemas/WritingEventInput'
+      responses:
+        '201':
+          description: Events saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: integer
+                    description: Number of events saved
+                    example: 25
+                  document:
+                    type: object
+                    properties:
+                      event_count:
+                        type: integer
+                      final_content_updated:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: Batch too large
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Batch size exceeds 50 events"
+
+    get:
+      summary: Get events for playback
+      operationId: getEvents
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Document UUID
+        - name: from
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: Start timestamp (Unix ms)
+        - name: to
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: End timestamp (Unix ms)
+        - name: after_checkpoint
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Only return events after nearest checkpoint
+      responses:
+        '200':
+          description: List of writing events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WritingEvent'
+                  checkpoint:
+                    $ref: '#/components/schemas/CheckpointData'
+                    nullable: true
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+
+  schemas:
+    WritingEventInput:
+      type: object
+      required:
+        - session_id
+        - timestamp
+        - event_type
+        - position
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Browser session identifier
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
+        event_type:
+          type: string
+          enum: [insert, delete, replace]
+        position:
+          type: integer
+          minimum: 0
+          maximum: 50000
+          description: Cursor position
+        content:
+          type: string
+          maxLength: 10000
+          description: Inserted/new content (for insert/replace)
+        content_before:
+          type: string
+          maxLength: 10000
+          description: Deleted/old content (for delete/replace)
+      example:
+        session_id: "550e8400-e29b-41d4-a716-446655440000"
+        timestamp: 1697731200000
+        event_type: "insert"
+        position: 42
+        content: "Hello world"
+
+    WritingEvent:
+      allOf:
+        - $ref: '#/components/schemas/WritingEventInput'
+        - type: object
+          required:
+            - id
+            - document_id
+            - created_at
+          properties:
+            id:
+              type: string
+              format: uuid
+            document_id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+
+    CheckpointData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        event_index:
+          type: integer
+          description: Event number (0-indexed)
+        timestamp:
+          type: integer
+          format: int64
+        content_snapshot:
+          type: string
+          description: Full document content at this checkpoint
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid event data"
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+
+    NotFound:
+      description: Document not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Document not found"
