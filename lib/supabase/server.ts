@@ -68,6 +68,10 @@ export function createAdminClient() {
   }
 
   return createServerClient<Database>(supabaseUrl, supabaseServiceKey, {
-    cookies: {},
+    cookies: {
+      get: () => null,
+      set: () => {},
+      remove: () => {},
+    },
   });
 }

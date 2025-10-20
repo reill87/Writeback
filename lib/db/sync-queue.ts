@@ -77,8 +77,9 @@ export class SyncQueueManager {
     limit: number = this.BATCH_SIZE
   ): Promise<QueuedEvent[]> {
     return await db.events
-      .where('[document_id+synced]')
-      .equals([documentId, false])
+      .where('document_id')
+      .equals(documentId)
+      .and(event => !event.synced)
       .sortBy('timestamp')
       .then((events) => events.slice(0, limit));
   }
@@ -89,7 +90,7 @@ export class SyncQueueManager {
    * @param eventIds - Array of event IDs to mark as synced
    */
   static async markSynced(eventIds: string[]): Promise<void> {
-    await db.events.bulkDelete(eventIds);
+    await db.events.where('id').anyOf(eventIds).modify({ synced: true });
   }
 
   /**
@@ -99,17 +100,10 @@ export class SyncQueueManager {
    * @param error - Error message
    */
   static async markFailed(eventIds: string[], error: string): Promise<void> {
-    const events = await db.events.bulkGet(eventIds);
-
-    const updates = events
-      .filter((e): e is QueuedEvent => e !== undefined)
-      .map((event) => ({
-        ...event,
-        retry_count: (event.retry_count || 0) + 1,
-        last_error: error,
-      }));
-
-    await db.events.bulkPut(updates);
+    await db.events.where('id').anyOf(eventIds).modify((event) => {
+      event.retry_count = (event.retry_count || 0) + 1;
+      event.last_error = error;
+    });
   }
 
   /**
@@ -120,7 +114,7 @@ export class SyncQueueManager {
    */
   static async sync(documentId: string): Promise<boolean> {
     // Check if already syncing
-    const status = await db.syncStatus.get(documentId);
+    const status = await db.syncStatus.where('document_id').equals(documentId).first();
     if (status?.is_syncing) {
       console.log(`Already syncing document ${documentId}`);
       return false;
@@ -216,7 +210,7 @@ export class SyncQueueManager {
       );
 
       // Update sync status with error
-      const currentStatus = await db.syncStatus.get(documentId);
+      const currentStatus = await db.syncStatus.where('document_id').equals(documentId).first();
       await db.syncStatus.put({
         document_id: documentId,
         pending_count: await this.getPendingCount(documentId),
@@ -235,8 +229,9 @@ export class SyncQueueManager {
    */
   private static async getPendingCount(documentId: string): Promise<number> {
     return await db.events
-      .where('[document_id+synced]')
-      .equals([documentId, false])
+      .where('document_id')
+      .equals(documentId)
+      .and(event => !event.synced)
       .count();
   }
 
@@ -245,7 +240,7 @@ export class SyncQueueManager {
    */
   private static async updateSyncStatus(documentId: string): Promise<void> {
     const pending_count = await this.getPendingCount(documentId);
-    const status = await db.syncStatus.get(documentId);
+    const status = await db.syncStatus.where('document_id').equals(documentId).first();
 
     await db.syncStatus.put({
       document_id: documentId,
@@ -281,7 +276,8 @@ export class SyncQueueManager {
       .and((e) => (e.retry_count || 0) >= this.MAX_RETRIES)
       .toArray();
 
-    await db.events.bulkDelete(failedEvents.map((e) => e.id));
+    const eventIds = failedEvents.map((e) => e.id);
+    await db.events.where('id').anyOf(eventIds).delete();
 
     return failedEvents.length;
   }

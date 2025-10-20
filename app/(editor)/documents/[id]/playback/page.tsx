@@ -109,62 +109,63 @@ export default function PlaybackPage() {
   return (
     <ErrorBoundary>
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Document Playback</h1>
-        <p className="text-gray-600">
-          Watch how this document was written, event by event.
-        </p>
-      </div>
-
-      {/* Playback Controls */}
-      <div className="mb-6 p-4 bg-white border rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <PlaybackControls state={status.state} controls={controls} />
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-            <SpeedSelector 
-              speed={status.speed} 
-              onSpeedChange={controls.setSpeed} 
-            />
-            <TimeDisplay 
-              currentTime={status.formattedTime}
-              totalTime={status.formattedTotalTime}
-            />
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-2">Document Playback</h1>
+          <p className="text-gray-600">
+            Watch how this document was written, event by event.
+          </p>
         </div>
-        
-        <TimelineSlider
-          currentTimeMs={status.currentTimeMs}
-          totalTimeMs={status.totalTimeMs}
-          progress={status.progress}
-          controls={controls}
+
+        {/* Playback Controls */}
+        <div className="mb-6 p-4 bg-white border rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <PlaybackControls state={status.state} controls={controls} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <SpeedSelector 
+                speed={status.speed} 
+                onSpeedChange={controls.setSpeed} 
+              />
+              <TimeDisplay 
+                currentTime={status.formattedTime}
+                totalTime={status.formattedTotalTime}
+              />
+            </div>
+          </div>
+          
+          <TimelineSlider
+            currentTimeMs={status.currentTimeMs}
+            totalTimeMs={status.totalTimeMs}
+            progress={status.progress}
+            controls={controls}
+          />
+        </div>
+
+        {/* Playback Player */}
+        <PlaybackPlayer 
+          frame={status.currentFrame}
+          className="mb-6"
         />
-      </div>
 
-      {/* Playback Player */}
-      <PlaybackPlayer 
-        frame={status.currentFrame}
-        className="mb-6"
-      />
-
-      {/* Statistics */}
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-medium mb-2">Statistics</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span className="text-gray-600">Total Events:</span>
-            <div className="font-mono">{events.length}</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Duration:</span>
-            <div className="font-mono">{status.formattedTotalTime}</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Speed:</span>
-            <div className="font-mono">{status.speed}x</div>
-          </div>
-          <div>
-            <span className="text-gray-600">Progress:</span>
-            <div className="font-mono">{status.progress.toFixed(1)}%</div>
+        {/* Statistics */}
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <h3 className="font-medium mb-2">Statistics</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Total Events:</span>
+              <div className="font-mono">{events.length}</div>
+            </div>
+            <div>
+              <span className="text-gray-600">Duration:</span>
+              <div className="font-mono">{status.formattedTotalTime}</div>
+            </div>
+            <div>
+              <span className="text-gray-600">Speed:</span>
+              <div className="font-mono">{status.speed}x</div>
+            </div>
+            <div>
+              <span className="text-gray-600">Progress:</span>
+              <div className="font-mono">{status.progress.toFixed(1)}%</div>
+            </div>
           </div>
         </div>
       </div>

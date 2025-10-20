@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type Table } from 'dexie';
 import type { QueuedEvent } from '@/types/events';
 
 /**
@@ -51,9 +51,9 @@ export interface SyncStatus {
  */
 export class WritingTimelineDB extends Dexie {
   // Table declarations with proper typing
-  events!: EntityTable<QueuedEvent, 'id'>;
-  documents!: EntityTable<CachedDocument, 'id'>;
-  syncStatus!: EntityTable<SyncStatus, 'document_id'>;
+  events!: Table<QueuedEvent, 'id'>;
+  documents!: Table<CachedDocument, 'id'>;
+  syncStatus!: Table<SyncStatus, 'document_id'>;
 
   constructor() {
     super('WritingTimelineDB');
@@ -118,8 +118,9 @@ export const dbUtils = {
    */
   async getPendingCount(documentId: string): Promise<number> {
     return await db.events
-      .where('[document_id+synced]')
-      .equals([documentId, false])
+      .where('document_id')
+      .equals(documentId)
+      .and(event => !event.synced)
       .count();
   },
 
