@@ -110,6 +110,7 @@ export function usePlayback({
     } catch (error) {
       console.error('Playback error:', error);
       setState('idle');
+      // Could add onError callback here if needed
     }
   }, [state, events, speed, totalTimeMs, onFrameUpdate, onComplete]);
   

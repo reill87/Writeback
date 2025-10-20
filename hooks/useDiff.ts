@@ -84,7 +84,15 @@ export function useDiff({ documentId, autoFetch = true }: UseDiffOptions): UseDi
       const response = await fetch(`/api/documents/${documentId}/events`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch events: ${response.statusText}`);
+        if (response.status === 404) {
+          throw new Error('Document not found');
+        } else if (response.status === 403) {
+          throw new Error('You do not have permission to view this document');
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(`Failed to fetch events: ${response.statusText}`);
+        }
       }
       
       const data = await response.json();

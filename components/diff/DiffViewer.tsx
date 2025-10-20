@@ -89,12 +89,12 @@ export function DiffViewer({
     <div className={`diff-viewer ${className}`}>
       {/* Header with statistics */}
       <div className="diff-header bg-white border border-gray-200 rounded-t-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Document Comparison
             </h2>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
                 <span className="text-gray-600">{stats.additions} additions</span>
@@ -109,15 +109,15 @@ export function DiffViewer({
             </div>
           </div>
           
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 whitespace-nowrap">
             {firstVersion.eventCount} → {finalVersion.eventCount} events
           </div>
         </div>
       </div>
       
       {/* Version headers */}
-      <div className="diff-version-headers bg-gray-50 border-l border-r border-gray-200 grid grid-cols-2">
-        <div className="p-3 border-r border-gray-200">
+      <div className="diff-version-headers bg-gray-50 border-l border-r border-gray-200 grid grid-cols-1 sm:grid-cols-2">
+        <div className="p-3 border-r sm:border-r border-b sm:border-b-0 border-gray-200">
           <div className="font-medium text-gray-900">First Draft</div>
           <div className="text-sm text-gray-600">
             {new Date(firstVersion.timestamp).toLocaleString()}
@@ -142,7 +142,7 @@ export function DiffViewer({
       
       {/* Statistics footer */}
       <div className="diff-footer mt-4 p-4 bg-gray-50 rounded-lg">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
             <span className="text-gray-600">Changes:</span>
             <div className="font-mono text-lg">

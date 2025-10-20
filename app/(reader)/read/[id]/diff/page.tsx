@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation';
 import { DiffViewer } from '@/components/diff/DiffViewer';
 import { ViewModeToggle } from '@/components/reader/ViewModeToggle';
 import { useDiff } from '@/hooks/useDiff';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { LoadingButton } from '@/components/ui/LoadingSpinner';
 
 export default function DiffPage() {
   const params = useParams();
@@ -41,7 +43,7 @@ export default function DiffPage() {
       </nav>
       
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* View Mode Toggle */}
         <div className="mb-8">
           <ViewModeToggle documentId={documentId} />
@@ -49,7 +51,7 @@ export default function DiffPage() {
         
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Document Comparison
           </h1>
           <p className="text-gray-600">
@@ -58,25 +60,27 @@ export default function DiffPage() {
           
           {/* Refresh Button */}
           <div className="mt-4">
-            <button
+            <LoadingButton
               onClick={refresh}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              loading={loading}
+              className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
             >
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
+              Refresh
+            </LoadingButton>
           </div>
         </div>
         
         {/* Diff Viewer */}
-        <DiffViewer
-          firstVersion={firstVersion}
-          finalVersion={finalVersion}
-          diffResult={diffResult}
-          loading={loading}
-          error={error}
-          className="mb-8"
-        />
+        <ErrorBoundary>
+          <DiffViewer
+            firstVersion={firstVersion}
+            finalVersion={finalVersion}
+            diffResult={diffResult}
+            loading={loading}
+            error={error}
+            className="mb-8"
+          />
+        </ErrorBoundary>
         
         {/* Help Text */}
         {!loading && !error && diffResult && (

@@ -129,9 +129,9 @@ export function DiffHighlight({
   // Side-by-side view
   return (
     <div className={`diff-highlight-side-by-side ${className}`}>
-      <div className="grid grid-cols-2 font-mono text-sm min-h-64">
+      <div className="grid grid-cols-1 lg:grid-cols-2 font-mono text-sm min-h-64">
         {/* Left side (original/deletions) */}
-        <div className="bg-white border-r border-gray-200">
+        <div className="bg-white border-r lg:border-r border-b lg:border-b-0 border-gray-200">
           {leftChanges.map((line, index) => (
             <div
               key={`left-${index}`}
