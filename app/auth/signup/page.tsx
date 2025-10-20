@@ -11,9 +11,34 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [showResend, setShowResend] = useState(false);
   
   const router = useRouter();
   const supabase = createClient();
+
+  const handleResendEmail = async () => {
+    if (!email) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Confirmation email sent again! Check your inbox.');
+      }
+    } catch (err) {
+      setError('Failed to resend email');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +66,12 @@ export default function SignUpPage() {
       if (error) {
         setError(error.message);
       } else if (data.user) {
-        setMessage('Check your email for the confirmation link!');
+        if (data.user.email_confirmed_at) {
+          setMessage('This email is already registered. Please sign in instead.');
+        } else {
+          setMessage('Check your email for the confirmation link!');
+          setShowResend(true);
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -127,7 +157,18 @@ export default function SignUpPage() {
           )}
 
           {message && (
-            <div className="text-green-600 text-sm text-center">{message}</div>
+            <div className="text-green-600 text-sm text-center">
+              {message}
+              {showResend && (
+                <button
+                  onClick={handleResendEmail}
+                  disabled={loading}
+                  className="block mt-2 mx-auto text-blue-600 hover:text-blue-500 underline text-sm disabled:opacity-50"
+                >
+                  Resend confirmation email
+                </button>
+              )}
+            </div>
           )}
 
           <div>
