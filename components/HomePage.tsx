@@ -9,8 +9,12 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  console.log('HomePage - Auth state:', { user, loading });
+
   useEffect(() => {
+    console.log('HomePage - useEffect triggered:', { user, loading });
     if (!loading && user) {
+      console.log('HomePage - Redirecting to dashboard');
       router.push('/dashboard');
     }
   }, [user, loading, router]);
