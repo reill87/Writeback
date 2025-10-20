@@ -43,7 +43,7 @@ export function ViewModeToggle({ documentId, className = '' }: ViewModeTogglePro
     {
       id: 'playback' as ViewMode,
       label: '타임라인 재생',
-      href: `/read/${documentId}/playback`,
+      href: `/documents/${documentId}/playback`,
       description: 'Watch writing process',
     },
     {
