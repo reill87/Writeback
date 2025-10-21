@@ -5,6 +5,7 @@ import type {
   EventBatchRequest,
   EventBatchResponse,
 } from '@/types/events';
+import { Logger, handleNetworkError, handleUnexpectedError } from '@/lib/utils/error-handler';
 
 /**
  * Sync Queue Manager
@@ -186,7 +187,12 @@ export class SyncQueueManager {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('SyncQueueManager: Server error response:', errorText);
+        Logger.error('SyncQueueManager: Server error response', null, { 
+          status: response.status, 
+          statusText: response.statusText, 
+          errorText,
+          documentId 
+        });
         throw new Error(`Sync failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
@@ -214,7 +220,7 @@ export class SyncQueueManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      console.error('Sync error:', errorMessage);
+      Logger.error('Sync error in SyncQueueManager', error, { documentId });
 
       // Mark events as failed (increment retry count)
       const pendingEvents = await this.getPending(documentId);

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { DocumentInsert } from '@/types/supabase';
+import { 
+  handleSupabaseError, 
+  handleValidationError, 
+  handleAuthError, 
+  handleUnexpectedError,
+  createErrorResponse,
+  Validators,
+  Logger
+} from '@/lib/utils/error-handler';
 
 /**
  * GET /api/documents
@@ -22,8 +31,13 @@ export async function GET(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (authError) {
+      Logger.error('Authentication error', authError);
+      return createErrorResponse(handleAuthError('unauthorized'));
+    }
+
+    if (!user) {
+      return createErrorResponse(handleAuthError('unauthorized'));
     }
 
     // Parse query params
@@ -55,20 +69,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch documents' },
-        { status: 500 }
-      );
+      Logger.error('Database error in GET /api/documents', error);
+      return createErrorResponse(handleSupabaseError(error));
     }
 
     return NextResponse.json({ documents: data });
   } catch (error) {
-    console.error('Unexpected error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleUnexpectedError(error);
   }
 }
 
@@ -107,34 +114,19 @@ export async function POST(request: NextRequest) {
       metadata = {} 
     } = body;
 
-    // Validate
-    if (!title || typeof title !== 'string' || title.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Title is required' },
-        { status: 400 }
-      );
-    }
-
-    if (title.length > 200) {
-      return NextResponse.json(
-        { error: 'Title must be 200 characters or less' },
-        { status: 400 }
-      );
+    // Validate title
+    const titleValidation = Validators.documentTitle(title);
+    if (!titleValidation.valid) {
+      return createErrorResponse(handleValidationError('title', titleValidation.message!));
     }
 
     // Validate status and visibility
     if (!['draft', 'published', 'archived'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Status must be draft, published, or archived' },
-        { status: 400 }
-      );
+      return createErrorResponse(handleValidationError('status', 'Must be draft, published, or archived'));
     }
 
     if (!['private', 'public', 'unlisted'].includes(visibility)) {
-      return NextResponse.json(
-        { error: 'Visibility must be private, public, or unlisted' },
-        { status: 400 }
-      );
+      return createErrorResponse(handleValidationError('visibility', 'Must be private, public, or unlisted'));
     }
 
     // Create document
@@ -154,19 +146,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to create document' },
-        { status: 500 }
-      );
+      Logger.error('Database error in POST /api/documents', error);
+      return createErrorResponse(handleSupabaseError(error));
     }
 
     return NextResponse.json({ document: data }, { status: 201 });
   } catch (error) {
-    console.error('Unexpected error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleUnexpectedError(error);
   }
 }

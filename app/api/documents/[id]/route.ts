@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { DocumentUpdate } from '@/types/supabase';
+import { 
+  handleSupabaseError, 
+  handleValidationError, 
+  handleAuthError, 
+  handleUnexpectedError,
+  createErrorResponse,
+  Validators,
+  Logger
+} from '@/lib/utils/error-handler';
 
 /**
  * GET /api/documents/[id]
