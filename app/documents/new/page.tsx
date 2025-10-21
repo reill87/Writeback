@@ -26,7 +26,8 @@ export default function NewDocumentPage() {
         },
         body: JSON.stringify({
           title: documentTitle,
-          is_public: false,
+          status: 'draft',
+          visibility: 'private',
         }),
       });
 

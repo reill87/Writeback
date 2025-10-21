@@ -80,7 +80,8 @@ export async function GET(request: NextRequest) {
  * Body:
  * {
  *   title: string (required)
- *   is_public?: boolean (default: false)
+ *   status?: 'draft' | 'published' | 'archived' (default: 'draft')
+ *   visibility?: 'private' | 'public' | 'unlisted' (default: 'private')
  *   metadata?: object
  * }
  */
@@ -143,7 +144,6 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       status: status as 'draft' | 'published' | 'archived',
       visibility: visibility as 'private' | 'public' | 'unlisted',
-      is_public: visibility === 'public', // Keep is_public for backward compatibility
       metadata,
     };
 

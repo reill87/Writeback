@@ -9,7 +9,7 @@ import type { DocumentUpdate } from '@/types/supabase';
  *
  * Access control:
  * - Owner can access any of their documents
- * - Anyone can access public documents (is_public = true)
+ * - Anyone can access public documents (visibility = 'public')
  * - Returns 404 for private documents owned by others
  */
 export async function GET(
@@ -62,14 +62,15 @@ export async function GET(
 /**
  * PATCH /api/documents/[id]
  *
- * Update a document (title, is_public, metadata)
+ * Update a document (title, status, visibility, metadata)
  *
  * Requires authentication and ownership.
  *
  * Body:
  * {
  *   title?: string
- *   is_public?: boolean
+ *   status?: 'draft' | 'published' | 'archived'
+ *   visibility?: 'private' | 'public' | 'unlisted'
  *   metadata?: object
  * }
  */
@@ -158,7 +159,6 @@ export async function PATCH(
     if (status !== undefined) updates.status = status as 'draft' | 'published' | 'archived';
     if (visibility !== undefined) {
       updates.visibility = visibility as 'private' | 'public' | 'unlisted';
-      updates.is_public = visibility === 'public'; // Keep is_public for backward compatibility
     }
     if (metadata !== undefined) updates.metadata = metadata;
 
