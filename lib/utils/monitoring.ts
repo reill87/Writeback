@@ -137,11 +137,29 @@ export class PerformanceMonitor {
    * Record a performance metric
    */
   private recordMetric(name: keyof PerformanceMetrics, value: number): void {
-    const metric = {
+    // Create a partial metric object
+    const partialMetric: Partial<PerformanceMetrics> = {
       [name]: value,
-    } as PerformanceMetrics;
+    };
 
-    this.metrics.push(metric);
+    // Find existing metric or create new one
+    const existingMetric = this.metrics[this.metrics.length - 1];
+    const metric: PerformanceMetrics = {
+      pageLoadTime: existingMetric?.pageLoadTime || 0,
+      firstContentfulPaint: existingMetric?.firstContentfulPaint || 0,
+      largestContentfulPaint: existingMetric?.largestContentfulPaint || 0,
+      cumulativeLayoutShift: existingMetric?.cumulativeLayoutShift || 0,
+      firstInputDelay: existingMetric?.firstInputDelay || 0,
+      timeToInteractive: existingMetric?.timeToInteractive || 0,
+      ...partialMetric,
+    };
+
+    // Update the last metric or add new one
+    if (this.metrics.length > 0) {
+      this.metrics[this.metrics.length - 1] = metric;
+    } else {
+      this.metrics.push(metric);
+    }
     
     // Send to analytics (in production)
     if (this.isEnabled) {
