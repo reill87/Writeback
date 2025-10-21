@@ -39,8 +39,8 @@ export async function GET(
       );
     }
 
-    // Check access: owner or public
-    const hasAccess = document.user_id === user?.id || document.is_public;
+    // Check access: owner or public visibility
+    const hasAccess = document.user_id === user?.id || document.visibility === 'public';
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -114,7 +114,7 @@ export async function PATCH(
 
     // Parse request body
     const body = await request.json();
-    const { title, is_public, metadata } = body;
+    const { title, status, visibility, metadata } = body;
 
     // Validate title if provided
     if (title !== undefined) {
@@ -132,10 +132,34 @@ export async function PATCH(
       }
     }
 
+    // Validate status if provided
+    if (status !== undefined) {
+      if (!['draft', 'published', 'archived'].includes(status)) {
+        return NextResponse.json(
+          { error: 'Status must be draft, published, or archived' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate visibility if provided
+    if (visibility !== undefined) {
+      if (!['private', 'public', 'unlisted'].includes(visibility)) {
+        return NextResponse.json(
+          { error: 'Visibility must be private, public, or unlisted' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update object
     const updates: DocumentUpdate = {};
     if (title !== undefined) updates.title = title.trim();
-    if (is_public !== undefined) updates.is_public = is_public;
+    if (status !== undefined) updates.status = status;
+    if (visibility !== undefined) {
+      updates.visibility = visibility;
+      updates.is_public = visibility === 'public'; // Keep is_public for backward compatibility
+    }
     if (metadata !== undefined) updates.metadata = metadata;
 
     if (Object.keys(updates).length === 0) {

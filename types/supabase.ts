@@ -61,6 +61,9 @@ export interface Database {
           user_id: string;
           title: string;
           is_public: boolean;
+          status: 'draft' | 'published' | 'archived';
+          visibility: 'private' | 'public' | 'unlisted';
+          published_at: string | null;
           metadata: Json;
           created_at: string;
           updated_at: string;
@@ -71,6 +74,9 @@ export interface Database {
           user_id: string;
           title: string;
           is_public?: boolean;
+          status?: 'draft' | 'published' | 'archived';
+          visibility?: 'private' | 'public' | 'unlisted';
+          published_at?: string | null;
           metadata?: Json;
           created_at?: string;
           updated_at?: string;
@@ -81,6 +87,9 @@ export interface Database {
           user_id?: string;
           title?: string;
           is_public?: boolean;
+          status?: 'draft' | 'published' | 'archived';
+          visibility?: 'private' | 'public' | 'unlisted';
+          published_at?: string | null;
           metadata?: Json;
           created_at?: string;
           updated_at?: string;

@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
       100
     );
     const offset = parseInt(searchParams.get('offset') || '0', 10);
-    const publicOnly = searchParams.get('public_only') === 'true';
+    const status = searchParams.get('status');
+    const visibility = searchParams.get('visibility');
 
     // Build query
     let query = supabase
@@ -43,8 +44,12 @@ export async function GET(request: NextRequest) {
       .order('last_edited_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (publicOnly) {
-      query = query.eq('is_public', true);
+    // Apply filters
+    if (status && ['draft', 'published', 'archived'].includes(status)) {
+      query = query.eq('status', status);
+    }
+    if (visibility && ['private', 'public', 'unlisted'].includes(visibility)) {
+      query = query.eq('visibility', visibility);
     }
 
     const { data, error } = await query;
@@ -95,7 +100,12 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { title, is_public = false, metadata = {} } = body;
+    const { 
+      title, 
+      status = 'draft', 
+      visibility = 'private', 
+      metadata = {} 
+    } = body;
 
     // Validate
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -112,11 +122,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate status and visibility
+    if (!['draft', 'published', 'archived'].includes(status)) {
+      return NextResponse.json(
+        { error: 'Status must be draft, published, or archived' },
+        { status: 400 }
+      );
+    }
+
+    if (!['private', 'public', 'unlisted'].includes(visibility)) {
+      return NextResponse.json(
+        { error: 'Visibility must be private, public, or unlisted' },
+        { status: 400 }
+      );
+    }
+
     // Create document
     const newDocument: DocumentInsert = {
       user_id: user.id,
       title: title.trim(),
-      is_public,
+      status,
+      visibility,
+      is_public: visibility === 'public', // Keep is_public for backward compatibility
       metadata,
     };
 

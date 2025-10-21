@@ -33,6 +33,16 @@ paths:
                   minLength: 1
                   maxLength: 255
                   example: "My First Essay"
+                status:
+                  type: string
+                  enum: [draft, published, archived]
+                  default: draft
+                  example: "draft"
+                visibility:
+                  type: string
+                  enum: [private, public, unlisted]
+                  default: private
+                  example: "private"
       responses:
         '201':
           description: Document created successfully
@@ -59,6 +69,12 @@ paths:
             type: string
             enum: [draft, published, archived]
           description: Filter by status
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [private, public, unlisted]
+          description: Filter by visibility
         - name: limit
           in: query
           schema:

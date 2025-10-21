@@ -58,7 +58,7 @@ export function DocumentHeader({
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
               <span className="text-blue-600 font-semibold text-sm">
-                {author.display_name?.[0]?.toUpperCase() || author.username[0].toUpperCase()}
+                {author.display_name?.[0]?.toUpperCase() || author.username?.[0]?.toUpperCase() || '?'}
               </span>
             </div>
             <div>
