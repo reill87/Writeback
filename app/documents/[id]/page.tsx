@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { TextEditor } from '@/components/editor/TextEditor';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 
@@ -19,6 +19,31 @@ export default function DocumentPage({ params }: DocumentPageProps) {
   const [documentExists, setDocumentExists] = useState(false);
   const [documentTitle, setDocumentTitle] = useState<string>('Untitled Document');
 
+  const checkDocumentExists = useCallback(async () => {
+    try {
+      // Try to fetch document metadata
+      const response = await fetch(`/api/documents/${params.id}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDocumentTitle(data.document.title || 'Untitled Document');
+        setDocumentExists(true);
+      } else if (response.status === 404) {
+        // Document doesn't exist
+        setDocumentExists(false);
+      } else {
+        // Other error
+        console.error('Error checking document:', response.statusText);
+        setDocumentExists(false);
+      }
+    } catch (error) {
+      console.error('Error checking document:', error);
+      setDocumentExists(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params.id]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login');
@@ -26,12 +51,9 @@ export default function DocumentPage({ params }: DocumentPageProps) {
     }
 
     if (user && params.id) {
-      // For now, assume document exists
-      // In production, you'd fetch document metadata here
-      setDocumentExists(true);
-      setIsLoading(false);
+      checkDocumentExists();
     }
-  }, [user, loading, router, params.id]);
+  }, [user, loading, router, params.id, checkDocumentExists]);
 
   if (loading || isLoading) {
     return (

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { TextEditor } from '@/components/editor/TextEditor';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 
@@ -13,19 +13,47 @@ export default function NewDocumentPage() {
   const [isCreating, setIsCreating] = useState(true);
   const [documentTitle, setDocumentTitle] = useState<string>('Untitled Document');
 
+  const createNewDocument = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: documentTitle,
+          is_public: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create document');
+      }
+
+      const data = await response.json();
+      setDocumentId(data.document.id);
+      setIsCreating(false);
+    } catch (error) {
+      console.error('Error creating document:', error);
+      // Fallback to client-side ID generation
+      const newDocId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setDocumentId(newDocId);
+      setIsCreating(false);
+    }
+  }, [user, documentTitle]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login');
       return;
     }
 
-    if (user) {
-      // Generate a new document ID
-      const newDocId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setDocumentId(newDocId);
-      setIsCreating(false);
+    if (user && !documentId) {
+      createNewDocument();
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, documentId, createNewDocument]);
 
   if (loading || isCreating) {
     return (
