@@ -230,7 +230,7 @@ export class UserAnalytics {
     this.trackEvent({
       eventType: 'page_view',
       userId,
-      page,
+      metadata: { page },
     });
   }
 
