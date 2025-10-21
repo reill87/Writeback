@@ -197,7 +197,7 @@ export async function GET(
     // Check document access (owner or public)
     const { data: document, error: docError } = await supabase
       .from('documents')
-      .select('id, user_id, is_public')
+      .select('id, user_id, visibility')
       .eq('id', documentId)
       .single();
 
@@ -209,7 +209,7 @@ export async function GET(
     }
 
     // Check if user has access
-    const hasAccess = document.user_id === user.id || document.is_public;
+    const hasAccess = document.user_id === user.id || document.visibility === 'public';
     if (!hasAccess) {
       return NextResponse.json(
         { error: 'Forbidden: You do not have access to this document' },

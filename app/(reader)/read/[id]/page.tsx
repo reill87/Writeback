@@ -43,7 +43,7 @@ export default async function ReadPage({ params }: ReadPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const hasAccess = document.is_public || document.user_id === user?.id;
+  const hasAccess = document.visibility === 'public' || document.user_id === user?.id;
 
   if (!hasAccess) {
     notFound();
@@ -149,7 +149,7 @@ export async function generateMetadata({ params }: ReadPageProps) {
     .from('documents')
     .select('title')
     .eq('id', id)
-    .eq('is_public', true)
+    .eq('visibility', 'public')
     .single();
 
   return {

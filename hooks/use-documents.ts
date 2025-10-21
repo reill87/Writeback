@@ -28,7 +28,8 @@ const documentsApi = {
    */
   async create(data: {
     title: string;
-    is_public?: boolean;
+    status?: 'draft' | 'published' | 'archived';
+    visibility?: 'private' | 'public' | 'unlisted';
     metadata?: Record<string, unknown>;
   }): Promise<Document> {
     const response = await fetch('/api/documents', {

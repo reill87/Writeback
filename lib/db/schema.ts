@@ -10,7 +10,8 @@ export interface CachedDocument {
   id: string;
   user_id: string;
   title: string;
-  is_public: boolean;
+  status: 'draft' | 'published' | 'archived';
+  visibility: 'private' | 'public' | 'unlisted';
   created_at: string;
   updated_at: string;
   last_edited_at: string;

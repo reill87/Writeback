@@ -8,7 +8,8 @@ import Link from 'next/link';
 interface Document {
   id: string;
   title: string;
-  is_public: boolean;
+  status: 'draft' | 'published' | 'archived';
+  visibility: 'private' | 'public' | 'unlisted';
   created_at: string;
   updated_at: string;
   last_edited_at: string;
@@ -161,9 +162,14 @@ export default function DocumentsPage() {
                         <h3 className="text-lg font-medium text-gray-900 truncate">
                           {document.title}
                         </h3>
-                        {document.is_public && (
+                        {document.visibility === 'public' && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Public
+                          </span>
+                        )}
+                        {document.status === 'published' && document.visibility !== 'public' && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Published
                           </span>
                         )}
                       </div>
