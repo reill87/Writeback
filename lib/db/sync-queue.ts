@@ -166,14 +166,28 @@ export class SyncQueueManager {
       };
 
       // Send to server
+      console.log('SyncQueueManager: Sending batch to server:', {
+        url: `/api/documents/${documentId}/events`,
+        batchSize: batch.events.length,
+        documentId: documentId
+      });
+      
       const response = await fetch(`/api/documents/${documentId}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(batch),
       });
 
+      console.log('SyncQueueManager: Server response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       if (!response.ok) {
-        throw new Error(`Sync failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('SyncQueueManager: Server error response:', errorText);
+        throw new Error(`Sync failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const result: EventBatchResponse = await response.json();

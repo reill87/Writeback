@@ -16,6 +16,8 @@ export default function NewDocumentPage() {
   const createNewDocument = useCallback(async () => {
     if (!user) return;
 
+    console.log('Creating new document for user:', user.email);
+
     try {
       const response = await fetch('/api/documents', {
         method: 'POST',
@@ -28,17 +30,23 @@ export default function NewDocumentPage() {
         }),
       });
 
+      console.log('Document creation response:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Failed to create document');
+        const errorText = await response.text();
+        console.error('Document creation error:', errorText);
+        throw new Error(`Failed to create document: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Document created successfully:', data.document.id);
       setDocumentId(data.document.id);
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating document:', error);
       // Fallback to client-side ID generation
       const newDocId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log('Using fallback document ID:', newDocId);
       setDocumentId(newDocId);
       setIsCreating(false);
     }
