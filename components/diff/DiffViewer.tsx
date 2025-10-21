@@ -116,16 +116,16 @@ export function DiffViewer({
       </div>
       
       {/* Version headers */}
-      <div className="diff-version-headers bg-gray-50 border-l border-r border-gray-200 grid grid-cols-1 sm:grid-cols-2">
-        <div className="p-3 border-r sm:border-r border-b sm:border-b-0 border-gray-200">
-          <div className="font-medium text-gray-900">First Draft</div>
-          <div className="text-sm text-gray-600">
+      <div className="diff-version-headers bg-gray-50 border-l border-r border-gray-200 grid grid-cols-1 lg:grid-cols-2">
+        <div className="p-3 border-r lg:border-r border-b lg:border-b-0 border-gray-200">
+          <div className="font-medium text-gray-900 text-sm sm:text-base">First Draft</div>
+          <div className="text-xs sm:text-sm text-gray-600">
             {new Date(firstVersion.timestamp).toLocaleString()}
           </div>
         </div>
         <div className="p-3">
-          <div className="font-medium text-gray-900">Final Version</div>
-          <div className="text-sm text-gray-600">
+          <div className="font-medium text-gray-900 text-sm sm:text-base">Final Version</div>
+          <div className="text-xs sm:text-sm text-gray-600">
             {new Date(finalVersion.timestamp).toLocaleString()}
           </div>
         </div>

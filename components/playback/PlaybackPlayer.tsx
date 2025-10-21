@@ -35,14 +35,14 @@ export default function PlaybackPlayer({ frame, className = '' }: PlaybackPlayer
   
   return (
     <div className={`playback-player ${className}`}>
-      <div className="playback-header">
-        <div className="playback-stats">
+      <div className="playback-header mb-4">
+        <div className="playback-stats flex flex-col sm:flex-row gap-2 sm:gap-4">
           {frame && (
             <>
-              <span className="text-sm text-gray-600">
+              <span className="text-xs sm:text-sm text-gray-600">
                 Event {frame.eventIndex + 1} / {frame.totalEvents}
               </span>
-              <span className="text-sm text-gray-600 ml-4">
+              <span className="text-xs sm:text-sm text-gray-600">
                 {frame.progress.toFixed(1)}%
               </span>
             </>
@@ -53,7 +53,7 @@ export default function PlaybackPlayer({ frame, className = '' }: PlaybackPlayer
       <div className="playback-content-wrapper">
         <div
           ref={contentRef}
-          className="playback-content whitespace-pre-wrap font-mono text-sm p-4 min-h-[300px] bg-gray-50 rounded-md border"
+          className="playback-content whitespace-pre-wrap font-mono text-xs sm:text-sm p-3 sm:p-4 min-h-[200px] sm:min-h-[300px] bg-gray-50 rounded-md border"
         />
       </div>
       

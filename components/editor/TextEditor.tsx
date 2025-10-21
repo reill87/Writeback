@@ -183,12 +183,12 @@ export function TextEditor({
         onSelect={handleSelectionChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="flex-1 w-full p-6 text-lg resize-none focus:outline-none font-mono"
+        className="flex-1 w-full p-3 sm:p-4 md:p-6 text-base sm:text-lg resize-none focus:outline-none font-mono"
         style={{
-          minHeight: '500px',
+          minHeight: '300px',
         }}
       />
-      <div className="flex items-center justify-between px-6 py-2 text-sm text-gray-500 border-t">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-6 py-2 text-xs sm:text-sm text-gray-500 border-t gap-1 sm:gap-0">
         <div>
           <span className={isNearLimit ? 'text-orange-600 font-medium' : ''}>
             {characterCount.toLocaleString()}
