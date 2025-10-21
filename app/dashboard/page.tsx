@@ -76,11 +76,14 @@ export default function Dashboard() {
             <p className="text-blue-100">Start writing a new document</p>
           </Link>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <Link
+            href="/documents"
+            className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+          >
             <div className="text-2xl mb-2">📚</div>
             <h3 className="text-lg font-semibold mb-1">My Documents</h3>
             <p className="text-gray-600">View and manage your documents</p>
-          </div>
+          </Link>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="text-2xl mb-2">📊</div>
