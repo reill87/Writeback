@@ -46,10 +46,10 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (status && ['draft', 'published', 'archived'].includes(status)) {
-      query = query.eq('status', status);
+      query = query.eq('status', status as 'draft' | 'published' | 'archived');
     }
     if (visibility && ['private', 'public', 'unlisted'].includes(visibility)) {
-      query = query.eq('visibility', visibility);
+      query = query.eq('visibility', visibility as 'private' | 'public' | 'unlisted');
     }
 
     const { data, error } = await query;
@@ -141,8 +141,8 @@ export async function POST(request: NextRequest) {
     const newDocument: DocumentInsert = {
       user_id: user.id,
       title: title.trim(),
-      status,
-      visibility,
+      status: status as 'draft' | 'published' | 'archived',
+      visibility: visibility as 'private' | 'public' | 'unlisted',
       is_public: visibility === 'public', // Keep is_public for backward compatibility
       metadata,
     };

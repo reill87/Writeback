@@ -22,6 +22,9 @@ interface EditorState {
   pendingEventCount: number;
   syncError: string | null;
 
+  // Auto-sync interval ID for cleanup
+  autoSyncIntervalId: NodeJS.Timeout | null;
+
   // Actions
   initDocument: (documentId: string, initialContent: string) => void;
   updateContent: (
@@ -33,6 +36,8 @@ interface EditorState {
   startNewSession: () => void;
   syncNow: () => Promise<void>;
   clearDocument: () => void;
+  startAutoSync: () => void;
+  stopAutoSync: () => void;
 }
 
 /**
@@ -56,6 +61,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   lastSavedAt: null,
   pendingEventCount: 0,
   syncError: null,
+  autoSyncIntervalId: null,
 
   /**
    * Initialize a document for editing
@@ -202,6 +208,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
    * Clear current document state
    */
   clearDocument: () => {
+    const state = get();
+    
+    // Clean up auto-sync interval
+    if (state.autoSyncIntervalId) {
+      clearInterval(state.autoSyncIntervalId);
+    }
+    
     set({
       currentDocument: null,
       content: '',
@@ -210,16 +223,37 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       lastSavedAt: null,
       pendingEventCount: 0,
       syncError: null,
+      autoSyncIntervalId: null,
     });
   },
-}));
 
-// Auto-sync interval (every 30 seconds)
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    const state = useEditorStore.getState();
-    if (state.currentDocument && state.pendingEventCount > 0) {
-      state.syncNow();
+  /**
+   * Start auto-sync interval
+   */
+  startAutoSync: () => {
+    const state = get();
+    if (state.autoSyncIntervalId) {
+      clearInterval(state.autoSyncIntervalId);
     }
-  }, 30000);
-}
+    
+    const intervalId = setInterval(() => {
+      const currentState = get();
+      if (currentState.currentDocument && currentState.pendingEventCount > 0) {
+        currentState.syncNow();
+      }
+    }, 30000);
+    
+    set({ autoSyncIntervalId: intervalId });
+  },
+
+  /**
+   * Stop auto-sync interval
+   */
+  stopAutoSync: () => {
+    const state = get();
+    if (state.autoSyncIntervalId) {
+      clearInterval(state.autoSyncIntervalId);
+      set({ autoSyncIntervalId: null });
+    }
+  },
+}));

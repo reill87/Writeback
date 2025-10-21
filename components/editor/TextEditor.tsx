@@ -37,13 +37,23 @@ export function TextEditor({
     initDocument,
     updateContent,
     setCursorPosition,
+    startAutoSync,
+    stopAutoSync,
+    clearDocument,
   } = useEditorStore();
 
   // Initialize document on mount
   useEffect(() => {
     initDocument(documentId, initialContent);
     lastContentRef.current = initialContent;
-  }, [documentId, initialContent, initDocument]);
+    startAutoSync(); // Start auto-sync when editor mounts
+    
+    // Cleanup on unmount
+    return () => {
+      stopAutoSync();
+      clearDocument();
+    };
+  }, [documentId, initialContent, initDocument, startAutoSync, stopAutoSync, clearDocument]);
 
   // Restore cursor position after updates
   useEffect(() => {

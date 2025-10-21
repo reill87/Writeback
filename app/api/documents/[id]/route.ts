@@ -155,9 +155,9 @@ export async function PATCH(
     // Build update object
     const updates: DocumentUpdate = {};
     if (title !== undefined) updates.title = title.trim();
-    if (status !== undefined) updates.status = status;
+    if (status !== undefined) updates.status = status as 'draft' | 'published' | 'archived';
     if (visibility !== undefined) {
-      updates.visibility = visibility;
+      updates.visibility = visibility as 'private' | 'public' | 'unlisted';
       updates.is_public = visibility === 'public'; // Keep is_public for backward compatibility
     }
     if (metadata !== undefined) updates.metadata = metadata;
