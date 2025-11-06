@@ -1,7 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { replayEvents, getTotalDuration, formatDuration, type ReplayFrame } from '@/lib/event-sourcing/replay';
+import {
+  replayEvents,
+  replayEventsFromIndex,
+  getTotalDuration,
+  formatDuration,
+  findEventIndexAtPlaybackTime,
+  reconstructContentUpToIndex,
+  type ReplayFrame
+} from '@/lib/event-sourcing/replay';
 import { delay } from '@/lib/utils/time';
 import type { WritingEvent } from '@/types/events';
 
@@ -13,7 +21,7 @@ export interface PlaybackControls {
   play: () => void;
   pause: () => void;
   stop: () => void;
-  seek: (timeMs: number) => void;
+  seek: (timeMs: number) => Promise<void>;
   setSpeed: (speed: PlaybackSpeed) => void;
 }
 
@@ -130,11 +138,89 @@ export function usePlayback({
     pausedTimeRef.current = 0;
   }, [cleanup]);
   
-  const seek = useCallback((timeMs: number) => {
-    // TODO: Implement seeking by finding the right event index
-    // and recreating the generator from that point
-    console.warn('Seek not yet implemented');
-  }, []);
+  const seek = useCallback(async (timeMs: number) => {
+    if (events.length === 0) return;
+
+    // Clamp to valid range
+    const targetTimeMs = Math.max(0, Math.min(timeMs, totalTimeMs));
+
+    // Find target event index
+    const targetIndex = findEventIndexAtPlaybackTime(events, targetTimeMs, speed);
+
+    // Store current playback state
+    const wasPlaying = state === 'playing';
+
+    // Stop current playback
+    cleanup();
+
+    // Reconstruct content and frame at target position
+    const content = reconstructContentUpToIndex(events, targetIndex);
+    const targetEvent = events[targetIndex];
+
+    const newFrame: ReplayFrame = {
+      content,
+      event: targetEvent,
+      eventIndex: targetIndex,
+      totalEvents: events.length,
+      progress: ((targetIndex + 1) / events.length) * 100,
+      delayMs: 0,
+    };
+
+    // Update state
+    setCurrentFrame(newFrame);
+    setCurrentTimeMs(targetTimeMs);
+
+    // If was playing, resume from new position
+    if (wasPlaying) {
+      setState('playing');
+
+      // Create new abort controller
+      abortControllerRef.current = new AbortController();
+      const abortSignal = abortControllerRef.current.signal;
+
+      // Start playback from target index
+      generatorRef.current = replayEventsFromIndex(events, targetIndex + 1, speed);
+      startTimeRef.current = Date.now() - targetTimeMs;
+
+      try {
+        for await (const frame of generatorRef.current) {
+          if (abortSignal.aborted) break;
+
+          setCurrentFrame(frame);
+          onFrameUpdate?.(frame);
+
+          const elapsedMs = Date.now() - startTimeRef.current;
+          setCurrentTimeMs(elapsedMs);
+
+          if (frame.delayMs > 0) {
+            await delay(frame.delayMs).catch(() => {});
+          }
+
+          if (abortSignal.aborted) break;
+        }
+
+        if (!abortSignal.aborted) {
+          setState('completed');
+          setCurrentTimeMs(totalTimeMs);
+          onComplete?.();
+        }
+      } catch (error) {
+        console.error('Playback error after seek:', error);
+        setState('idle');
+      }
+    } else {
+      // If was paused/idle/completed, update state and prepare for resume
+      if (state === 'paused' || state === 'completed') {
+        setState('paused');
+        // Set up generator for when play is pressed
+        generatorRef.current = replayEventsFromIndex(events, targetIndex + 1, speed);
+        pausedTimeRef.current = targetTimeMs;
+      } else {
+        // idle state
+        setState('idle');
+      }
+    }
+  }, [events, totalTimeMs, speed, state, cleanup, onFrameUpdate, onComplete]);
   
   const handleSetSpeed = useCallback((newSpeed: PlaybackSpeed) => {
     setSpeed(newSpeed);
