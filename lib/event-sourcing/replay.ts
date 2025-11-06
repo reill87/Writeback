@@ -214,3 +214,117 @@ export function findEventAtTimestamp(
   // Return closest event before target
   return Math.max(0, right);
 }
+
+/**
+ * Find event index at specific playback time
+ *
+ * Converts playback time (with condensed delays) to event index.
+ * Used for seeking/scrubbing in timeline.
+ *
+ * @param events - Array of events
+ * @param targetPlaybackTimeMs - Target playback time in milliseconds
+ * @param speed - Playback speed multiplier
+ * @returns Event index (0-based)
+ */
+export function findEventIndexAtPlaybackTime(
+  events: WritingEvent[],
+  targetPlaybackTimeMs: number,
+  speed: number = 1
+): number {
+  if (events.length === 0) return 0;
+  if (targetPlaybackTimeMs <= 0) return 0;
+
+  let accumulatedTimeMs = 0;
+
+  for (let i = 0; i < events.length - 1; i++) {
+    const event = events[i];
+    const nextEvent = events[i + 1];
+    const rawDelay = nextEvent.timestamp - event.timestamp;
+    const condensedDelay = calculateCondensedDelay(rawDelay) / speed;
+
+    // Check if target time falls within this event's duration
+    if (accumulatedTimeMs + condensedDelay >= targetPlaybackTimeMs) {
+      return i;
+    }
+
+    accumulatedTimeMs += condensedDelay;
+  }
+
+  // Target is beyond all events, return last event
+  return events.length - 1;
+}
+
+/**
+ * Build content state up to a specific event index
+ *
+ * Applies all events from start to the specified index to reconstruct content state.
+ *
+ * @param events - Array of events
+ * @param toIndex - Event index to build up to (inclusive)
+ * @returns Content state at that index
+ */
+export function buildContentUpToIndex(
+  events: WritingEvent[],
+  toIndex: number
+): string {
+  if (events.length === 0 || toIndex < 0) return '';
+
+  let content = '';
+  const endIndex = Math.min(toIndex, events.length - 1);
+
+  for (let i = 0; i <= endIndex; i++) {
+    content = applyEvent(content, events[i]);
+  }
+
+  return content;
+}
+
+/**
+ * Create replay generator starting from a specific event index
+ *
+ * Used for seeking - replays from a specific point in the timeline.
+ *
+ * @param events - Array of events
+ * @param startIndex - Event index to start from
+ * @param initialContent - Content state at startIndex
+ * @param speed - Playback speed multiplier
+ * @returns Async generator yielding replay frames
+ */
+export async function* replayEventsFromIndex(
+  events: WritingEvent[],
+  startIndex: number,
+  initialContent: string,
+  speed: number = 1
+): AsyncGenerator<ReplayFrame> {
+  if (events.length === 0 || startIndex >= events.length) {
+    return;
+  }
+
+  let content = initialContent;
+  const totalEvents = events.length;
+
+  for (let i = startIndex; i < events.length; i++) {
+    const event = events[i];
+    const nextEvent = events[i + 1];
+
+    // Apply event to content
+    content = applyEvent(content, event);
+
+    // Calculate delay until next event
+    let delayMs = 0;
+    if (nextEvent) {
+      const rawDelay = nextEvent.timestamp - event.timestamp;
+      delayMs = calculateCondensedDelay(rawDelay) / speed;
+    }
+
+    // Yield frame
+    yield {
+      content,
+      event,
+      eventIndex: i,
+      totalEvents,
+      progress: ((i + 1) / totalEvents) * 100,
+      delayMs,
+    };
+  }
+}

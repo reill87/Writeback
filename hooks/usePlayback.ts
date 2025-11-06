@@ -1,7 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { replayEvents, getTotalDuration, formatDuration, type ReplayFrame } from '@/lib/event-sourcing/replay';
+import {
+  replayEvents,
+  replayEventsFromIndex,
+  getTotalDuration,
+  formatDuration,
+  findEventIndexAtPlaybackTime,
+  buildContentUpToIndex,
+  type ReplayFrame
+} from '@/lib/event-sourcing/replay';
 import { delay } from '@/lib/utils/time';
 import type { WritingEvent } from '@/types/events';
 
@@ -131,10 +139,55 @@ export function usePlayback({
   }, [cleanup]);
   
   const seek = useCallback((timeMs: number) => {
-    // TODO: Implement seeking by finding the right event index
-    // and recreating the generator from that point
-    console.warn('Seek not yet implemented');
-  }, []);
+    if (events.length === 0) return;
+
+    // Clamp time to valid range
+    const clampedTime = Math.max(0, Math.min(timeMs, totalTimeMs));
+
+    // Stop current playback
+    const wasPlaying = state === 'playing';
+    cleanup();
+
+    // Find event index at target time
+    const targetIndex = findEventIndexAtPlaybackTime(events, clampedTime, speed);
+
+    // Build content up to target index
+    const content = buildContentUpToIndex(events, targetIndex);
+
+    // Create frame at target position
+    const frame: ReplayFrame = {
+      content,
+      event: events[targetIndex],
+      eventIndex: targetIndex,
+      totalEvents: events.length,
+      progress: ((targetIndex + 1) / events.length) * 100,
+      delayMs: 0,
+    };
+
+    // Update state
+    setCurrentFrame(frame);
+    setCurrentTimeMs(clampedTime);
+    onFrameUpdate?.(frame);
+
+    // Create new generator from this point
+    generatorRef.current = replayEventsFromIndex(
+      events,
+      targetIndex + 1, // Start from next event
+      content,
+      speed
+    );
+
+    // Set state based on whether we were playing
+    if (wasPlaying) {
+      setState('playing');
+      pausedTimeRef.current = clampedTime;
+      // Resume playback from new position
+      setTimeout(() => play(), 0);
+    } else {
+      setState('paused');
+      pausedTimeRef.current = clampedTime;
+    }
+  }, [events, totalTimeMs, state, speed, cleanup, onFrameUpdate, play]);
   
   const handleSetSpeed = useCallback((newSpeed: PlaybackSpeed) => {
     setSpeed(newSpeed);
